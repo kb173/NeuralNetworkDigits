@@ -14,17 +14,25 @@ int main() {
 
     unsigned int inputNeuronCount = dataset.training_images.front().size();
 
-    NeuralNet net = NeuralNet(std::vector<unsigned int>{inputNeuronCount, 3, 1});
+    NeuralNet net = NeuralNet(std::vector<unsigned int>{inputNeuronCount, 48, 48, 10});
 
     // Train
     for (unsigned int i = 0; i < dataset.training_images.size(); i++) {
         std::vector<double> trainingData;
-        std::vector<double> expected = std::vector<double>{(double)dataset.training_labels[i] / 10.0};
+        std::vector<double> expected;
+
+        for (int j = 0; j < 10; j++) {
+            if (j == dataset.training_labels[i]) {
+                expected.push_back(1.0);
+            } else {
+                expected.push_back(0.0);
+            }
+        }
 
         unsigned int trainingDataSize = dataset.training_images[i].size();
 
         for (unsigned int pixel = 0; pixel < trainingDataSize; pixel++) {
-            double pixelValue = (double)dataset.training_images[i][pixel] / 255.0;
+            double pixelValue = (double)dataset.training_images[i][pixel] / 128.0 - 1.0;
             trainingData.emplace_back(pixelValue);
         }
 
@@ -32,19 +40,51 @@ int main() {
         net.backPropagate(expected);
     }
 
+    std::cout << "Done training" << std::endl;
+
     // Classify!
     int goodDecisions = 0;
     int badDecisions = 0;
 
-    std::map<std::string, std::map<std::string, int>> guessExpectMatrix;
+    std::map<unsigned int, std::map<unsigned int, unsigned int>> guessExpectMatrix;
 
     for (int i = 0; i < dataset.test_images.size(); i++) {
+        std::vector<double> trainingData;
+
+        unsigned int trainingDataSize = dataset.test_images[i].size();
+
+        for (unsigned int pixel = 0; pixel < trainingDataSize; pixel++) {
+            double pixelValue = (double)dataset.test_images[i][pixel] / 128.0 - 1.0;
+            trainingData.emplace_back(pixelValue);
+        }
+
+        net.feedForward(trainingData);
+
+        std::vector<double> results = net.getResults();
+        double highest = 0;
+        unsigned int result = 0;
+
+        // Get highest result value
+        for (unsigned int j = 0; j < 10; j++) {
+            if (results[j] > highest) {
+                highest = results[j];
+                result = j;
+            }
+        }
+
+        if (result == dataset.test_labels[i]) {
+            goodDecisions++;
+        } else {
+            badDecisions++;
+        }
+
+        guessExpectMatrix[result][dataset.test_labels[i]]++;
     }
 
     // Print the guessExpectMatrix
-    for (int x = 0; x < 10; x++) {
-        for (int y = 0; y < 10; y++) {
-            std::cout << std::setw(10) << guessExpectMatrix[std::to_string(x)][std::to_string(y)];
+    for (unsigned int x = 0; x < 10; x++) {
+        for (unsigned int y = 0; y < 10; y++) {
+            std::cout << std::setw(10) << guessExpectMatrix[x][y];
         }
 
         std::cout << std::endl;

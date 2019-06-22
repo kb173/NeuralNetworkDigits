@@ -19,7 +19,7 @@ NeuralNet::NeuralNet(const std::vector<unsigned int>& topology) {
         unsigned int neuronCount = topology[layerNumber] + 1;
 
         // Neurons in the next layer, so we know how many connections these will need
-        unsigned int nextLayerNeuronCount = layerNumber == topology.size() - 1 ? 0 : topology[layerNumber + 1];
+        unsigned int nextLayerNeuronCount = layerNumber == topology.size() - 1 ? 0 : topology[layerNumber + 1] + 1;
 
         // Add neurons within this layer
         for (unsigned int neuronNumber = 0; neuronNumber < neuronCount; neuronNumber++) {

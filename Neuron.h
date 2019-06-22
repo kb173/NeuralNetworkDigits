@@ -32,8 +32,8 @@ private:
     static double activationFunction(double value);
     static double activationFunctionDerivative(double value);
     double sumDOW(const std::vector<Neuron> &layer) const;
-    double learningRate = 0.2;
-    double momentum = 0.4;
+    double learningRate = 0.01;
+    double momentum = 0.3;
 };
 
 

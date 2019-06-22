@@ -3,6 +3,7 @@
 //
 
 #include <cmath>
+#include <iostream>
 #include "Neuron.h"
 
 Neuron::Neuron(unsigned int outputCount, unsigned int indexInLayer) : indexInLayer(indexInLayer) {
@@ -36,7 +37,7 @@ double Neuron::activationFunction(double value) {
 
 double Neuron::activationFunctionDerivative(double value) {
     // Fast approximation of hyperbolic tangent function derivative
-    return 1.0 - value * value;
+    return 1.0 - tanh(value) * tanh(value);
 }
 
 void Neuron::calculateOutputGradients(double expected) {
