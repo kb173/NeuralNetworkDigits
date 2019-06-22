@@ -4,7 +4,32 @@
 #include <map>
 #include "NeuralNet.h"
 
-// https://www.youtube.com/watch?v=KkwX7FkLfug 34:00
+std::vector<double> prepareImage(std::vector<uint8_t> data) {
+    std::vector<double> doubleData;
+
+    unsigned int trainingDataSize = data.size();
+
+    for (unsigned int pixel = 0; pixel < trainingDataSize; pixel++) {
+        double pixelValue = (double)data[pixel] / 128.0 - 1.0;
+        doubleData.emplace_back(pixelValue);
+    }
+
+    return doubleData;
+}
+
+std::vector<double> prepareExpected(uint8_t value) {
+    std::vector<double> expected;
+
+    for (int j = 0; j < 10; j++) {
+        if (j == value) {
+            expected.push_back(1.0);
+        } else {
+            expected.push_back(0.0);
+        }
+    }
+
+    return expected;
+}
 
 int main() {
     // Load MNIST data
@@ -17,27 +42,20 @@ int main() {
     NeuralNet net = NeuralNet(std::vector<unsigned int>{inputNeuronCount, 48, 48, 10});
 
     // Train
-    for (unsigned int i = 0; i < dataset.training_images.size(); i++) {
-        std::vector<double> trainingData;
-        std::vector<double> expected;
+    unsigned int trainingRuns = 300000;
 
-        for (int j = 0; j < 10; j++) {
-            if (j == dataset.training_labels[i]) {
-                expected.push_back(1.0);
-            } else {
-                expected.push_back(0.0);
-            }
+    unsigned int trainingDataSize = dataset.training_images.size();
+
+    for (unsigned int i = 0; i < trainingRuns; i++) {
+        // Show progress
+        if (i % 1000 == 999) {
+            std::cout << (double)i * 100 / trainingRuns << "%" << std::endl;
         }
 
-        unsigned int trainingDataSize = dataset.training_images[i].size();
+        unsigned int iFixed = i % trainingDataSize;
 
-        for (unsigned int pixel = 0; pixel < trainingDataSize; pixel++) {
-            double pixelValue = (double)dataset.training_images[i][pixel] / 128.0 - 1.0;
-            trainingData.emplace_back(pixelValue);
-        }
-
-        net.feedForward(trainingData);
-        net.backPropagate(expected);
+        net.feedForward(prepareImage(dataset.training_images[iFixed]));
+        net.backPropagate(prepareExpected(dataset.training_labels[iFixed]));
     }
 
     std::cout << "Done training" << std::endl;
@@ -49,22 +67,13 @@ int main() {
     std::map<unsigned int, std::map<unsigned int, unsigned int>> guessExpectMatrix;
 
     for (int i = 0; i < dataset.test_images.size(); i++) {
-        std::vector<double> trainingData;
+        net.feedForward(prepareImage(dataset.test_images[i]));
 
-        unsigned int trainingDataSize = dataset.test_images[i].size();
-
-        for (unsigned int pixel = 0; pixel < trainingDataSize; pixel++) {
-            double pixelValue = (double)dataset.test_images[i][pixel] / 128.0 - 1.0;
-            trainingData.emplace_back(pixelValue);
-        }
-
-        net.feedForward(trainingData);
-
+        // Get highest result value
         std::vector<double> results = net.getResults();
         double highest = 0;
         unsigned int result = 0;
 
-        // Get highest result value
         for (unsigned int j = 0; j < 10; j++) {
             if (results[j] > highest) {
                 highest = results[j];
