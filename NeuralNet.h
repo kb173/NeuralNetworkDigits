@@ -22,10 +22,11 @@ public:
     std::vector<double> getResults();
 
     /// Adjust the weights based on the current output neuron values, compared to the expected values
-    void backPropagate(std::vector<double> expected);
+    void backPropagate(const std::vector<double> &expected);
 
 private:
     std::vector<std::vector<Neuron>> layers;
+    double overallError;
 
 };
 
